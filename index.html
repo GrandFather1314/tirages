@@ -1,0 +1,1270 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tirages aléatoires</title>
+<meta name="description" content="Dés et tirages dans des listes personnalisées et des méta-listes.">
+<meta name="theme-color" content="#4f46e5">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tirages">
+<style>
+:root {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #eef0f4;
+  --text: #1c2030;
+  --muted: #667085;
+  --border: #d9dde5;
+  --accent: #4f46e5;
+  --accent-text: #ffffff;
+  --danger: #c0392b;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14161d;
+    --surface: #1d2029;
+    --surface-2: #272b37;
+    --text: #e8eaf0;
+    --muted: #9aa1b2;
+    --border: #343948;
+    --accent: #7c83ff;
+    --accent-text: #11131a;
+    --danger: #ff7b6b;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.app {
+  max-width: 980px; margin: 0 auto;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+           max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+.top { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.top h1 { margin: 4px 0; }
+.top-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lang { display: inline-flex; }
+.lang button { min-height: 36px; padding: 4px 12px; font-weight: 600; border-radius: 0; }
+.lang button:first-child { border-radius: var(--radius) 0 0 var(--radius); }
+.lang button:last-child { border-radius: 0 var(--radius) var(--radius) 0; margin-left: -1px; }
+.lang button[aria-pressed=true] {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+  position: relative;
+}
+h1 { font-size: 1.4rem; margin: 4px 0 14px; }
+h2 { font-size: 1.05rem; margin: 0 0 10px; }
+button, input, textarea { font: inherit; color: inherit; }
+button {
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  min-height: 40px;
+}
+button:hover { border-color: var(--accent); }
+button:focus-visible, input:focus-visible, textarea:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+button.primary {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+button.danger { color: var(--danger); }
+input[type=text], input[type=number], textarea {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+}
+textarea { min-height: 180px; resize: vertical; }
+input[type=number] { width: 90px; }
+label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 4px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 14px;
+}
+.tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+.tabs button { flex: 1; font-weight: 600; }
+.tabs button[aria-selected=true] {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: end; }
+.hint { color: var(--muted); font-size: .9rem; }
+.check { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 1rem; color: var(--text); margin: 0; min-height: 40px; }
+.check input { width: 20px; height: 20px; accent-color: var(--accent); }
+
+/* Dés */
+.dice-picker { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 14px; }
+.dice-picker button { font-weight: 700; font-size: 1.05rem; padding: 12px 0; }
+.dice-picker button[aria-pressed=true] {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-color: var(--accent);
+}
+.stepper { display: inline-flex; align-items: center; gap: 6px; }
+.stepper button { width: 40px; padding: 0; font-size: 1.2rem; }
+.stepper input { width: 64px; text-align: center; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.chip {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  min-width: 44px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.15rem;
+  animation: pop .25s ease-out;
+}
+.chip.big { font-size: 1.05rem; font-weight: 600; text-align: left; }
+@keyframes pop { from { transform: scale(.7); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .chip { animation: none; } }
+.total { margin-top: 10px; font-size: 1.05rem; }
+.total strong { font-size: 1.4rem; }
+
+/* Listes */
+.lists-layout { display: grid; grid-template-columns: 260px 1fr; gap: 14px; align-items: start; }
+@media (max-width: 720px) { .lists-layout { grid-template-columns: 1fr; } }
+.side-actions { display: flex; gap: 8px; margin-bottom: 10px; }
+.side-actions button { flex: 1; padding: 8px 6px; font-size: .9rem; }
+.collection { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.collection button {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+.collection button[aria-current=true] { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.collection .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.badge { font-size: .75rem; color: var(--muted); white-space: nowrap; }
+.badge.meta { color: var(--accent); font-weight: 600; }
+.members { display: flex; flex-direction: column; }
+.group { margin-top: 14px; }
+.group h3 { font-size: .95rem; margin: 0; color: var(--muted); }
+.warn { color: var(--danger); font-size: .9rem; margin-top: 8px; }
+.empty { text-align: center; color: var(--muted); padding: 30px 10px; }
+.editor-head { display: flex; gap: 10px; align-items: end; margin-bottom: 12px; }
+.editor-head > div { flex: 1; }
+.member-row {
+  display: flex; flex-wrap: wrap; gap: 4px 16px;
+  align-items: center; justify-content: space-between;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+}
+.member-row:last-child { border-bottom: 0; }
+.member-opts { display: flex; align-items: center; gap: 10px; transition: opacity .15s; }
+.member-opts input[type=number] { width: 76px; }
+.notice {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 10px; margin-top: 10px; font-size: .9rem;
+}
+.notice-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.notice-actions button { padding: 6px 10px; min-height: 36px; font-size: .9rem; }
+.hist-list { max-height: 320px; overflow: auto; border: 1px solid var(--border); border-radius: var(--radius); margin-top: 8px; }
+.hist-row { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.hist-row:last-child { border-bottom: 0; }
+.hist-time { color: var(--muted); font-size: .8rem; white-space: nowrap; }
+.hist-vals { display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.hist-grp { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: baseline; }
+.hist-grp b { font-size: .8rem; font-weight: 600; color: var(--muted); }
+.hchip { background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 1px 8px; font-size: .9rem; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <h1>🎲 <span data-i18n="title">Tirages aléatoires</span></h1>
+    <div class="top-tools">
+      <button type="button" id="installBtn" data-i18n="install" hidden>Installer l’application</button>
+      <div class="lang" role="group" data-i18n-label="langGroup" aria-label="Langue">
+        <button type="button" data-lang="fr" lang="fr" aria-label="Français" aria-pressed="true">FR</button>
+        <button type="button" data-lang="en" lang="en" aria-label="English" aria-pressed="false">EN</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" id="tab-des" aria-selected="true" aria-controls="panel-des" data-i18n="tabDice">Dés</button>
+    <button role="tab" id="tab-listes" aria-selected="false" aria-controls="panel-listes" data-i18n="tabLists">Listes</button>
+  </div>
+
+  <!-- DÉS -->
+  <section id="panel-des" role="tabpanel" aria-labelledby="tab-des">
+    <div class="card">
+      <h2 data-i18n="dieType">Type de dé</h2>
+      <div class="dice-picker" id="dicePicker"></div>
+      <div class="row">
+        <div>
+          <label for="diceCount" data-i18n="diceCount">Nombre de dés</label>
+          <div class="stepper">
+            <button type="button" id="diceMinus" data-i18n-label="diceFewer" aria-label="Un dé de moins">−</button>
+            <input type="number" id="diceCount" min="1" max="100" value="1" inputmode="numeric">
+            <button type="button" id="dicePlus" data-i18n-label="diceMore" aria-label="Un dé de plus">+</button>
+          </div>
+        </div>
+        <button class="primary" id="rollBtn" type="button" data-i18n="roll">Lancer</button>
+      </div>
+      <div id="diceResult" aria-live="polite"></div>
+    </div>
+  </section>
+
+  <!-- LISTES -->
+  <section id="panel-listes" role="tabpanel" aria-labelledby="tab-listes" hidden>
+    <div class="lists-layout">
+      <aside class="card">
+        <div class="side-actions">
+          <button type="button" id="newList" data-i18n="newList">+ Liste</button>
+          <button type="button" id="newMeta" data-i18n="newMeta">+ Méta-liste</button>
+        </div>
+        <div class="side-actions">
+          <button type="button" id="exportBtn" data-i18n="export">Exporter</button>
+          <button type="button" id="importBtn" data-i18n="import">Importer</button>
+        </div>
+        <input type="file" id="importFile" accept=".json,application/json" hidden>
+        <div id="importPrompt" aria-live="polite"></div>
+        <hr style="border:0;border-top:1px solid var(--border);margin:12px 0">
+        <ul class="collection" id="collection"></ul>
+      </aside>
+      <div id="main"></div>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var STORE_KEY = 'tirages.v1';
+  var LANG_KEY = 'tirages.lang';
+  var DICE = [4, 6, 8, 10, 12, 20];
+
+  /* ---------- Internationalisation ---------- */
+  var I18N = {
+    fr: {
+      title: 'Tirages aléatoires',
+      desc: 'Dés et tirages dans des listes personnalisées et des méta-listes.',
+      install: 'Installer l’application',
+      langGroup: 'Langue',
+      tabDice: 'Dés',
+      tabLists: 'Listes',
+      dieType: 'Type de dé',
+      diceCount: 'Nombre de dés',
+      diceFewer: 'Un dé de moins',
+      diceMore: 'Un dé de plus',
+      roll: 'Lancer',
+      newList: '+ Liste',
+      newMeta: '+ Méta-liste',
+      'export': 'Exporter',
+      'import': 'Importer',
+      dieAria: 'Dé à {n} faces',
+      totalSep: ' — total : ',
+      colon: ' : ',
+      noLists: 'Aucune liste pour le moment.',
+      metaBadge: 'méta · {n}',
+      noName: '(sans nom)',
+      defList: 'Liste',
+      defMeta: 'Méta-liste',
+      emptyMain: 'Créez une liste ou une méta-liste, ou sélectionnez-en une pour commencer.',
+      nameList: 'Nom de la liste',
+      nameMeta: 'Nom de la méta-liste',
+      itemsPlaceholder: 'Un élément par ligne',
+      itemsLabel: 'Éléments (un par ligne)',
+      'item.one': 'élément',
+      'item.many': 'éléments',
+      metaHint: 'Chaque liste est tirée avec ses propres réglages (voir ci-dessus).',
+      drawTitle: 'Tirage',
+      drawAll: 'Tirer dans toutes les listes',
+      unique: 'Tirages uniques',
+      drawBtn: 'Tirer',
+      drawCountLabel: 'Nombre de tirages',
+      listEmptyResult: 'Liste vide.',
+      only: 'Seulement',
+      'distinct.one': 'valeur distincte disponible',
+      'distinct.many': 'valeurs distinctes disponibles',
+      outOf: 'sur {n} demandées.',
+      listEmpty: 'Cette liste est vide.',
+      metaNone: 'Cette méta-liste ne regroupe aucune liste.',
+      confirm: 'Confirmer',
+      cancel: 'Annuler',
+      del: 'Supprimer',
+      metaLabel: 'Listes regroupées et réglages de tirage pour chacune',
+      metaNeedLists: 'Créez d’abord des listes simples à regrouper.',
+      metaCountAria: 'Nombre de tirages pour {name}',
+      metaUniqueAria: 'Tirages uniques pour {name}',
+      drawsShort: 'Tirages',
+      uniqueShort: 'Uniques',
+      errFormat: 'Format non reconnu.',
+      errNone: 'Aucune liste trouvée dans ce fichier.',
+      errJson: 'Fichier JSON invalide.',
+      errRead: 'Lecture du fichier impossible.',
+      nothingExport: 'Rien à exporter pour le moment.',
+      'imported.one': 'élément importé',
+      'imported.many': 'éléments importés',
+      'list.one': 'liste',
+      'list.many': 'listes',
+      'metalist.one': 'méta-liste',
+      'metalist.many': 'méta-listes',
+      found: '{l} et {m} trouvées.',
+      addExisting: 'Ajouter aux existantes',
+      replaceAll: 'Tout remplacer',
+      record: 'Enregistrer dans l’historique',
+      avoid: 'Uniquement des tirages absents de l’historique',
+      noNewDraw: 'Aucun nouveau tirage possible : toutes les combinaisons sont déjà dans l’historique.',
+      histTitle: 'Historique',
+      histScopeList: 'Options actuelles : {opts}.',
+      histScopeMeta: 'Réglages actuels des listes regroupées.',
+      modeUnique: 'uniques',
+      modeRepeat: 'non uniques',
+      histEmpty: 'Aucun tirage enregistré pour ces options.',
+      histClear: 'Vider cet historique',
+      histClearAll: 'Tout vider (toutes les options)',
+      histClearAsk: 'Vider cet historique ?',
+      histClearAllAsk: 'Supprimer tous les historiques, toutes options confondues ?',
+      'draw.one': 'tirage',
+      'draw.many': 'tirages',
+      'entry.one': 'entrée',
+      'entry.many': 'entrées'
+    },
+    en: {
+      title: 'Random draws',
+      desc: 'Dice rolls and draws from custom lists and meta-lists.',
+      install: 'Install app',
+      langGroup: 'Language',
+      tabDice: 'Dice',
+      tabLists: 'Lists',
+      dieType: 'Die type',
+      diceCount: 'Number of dice',
+      diceFewer: 'One die fewer',
+      diceMore: 'One die more',
+      roll: 'Roll',
+      newList: '+ List',
+      newMeta: '+ Meta-list',
+      'export': 'Export',
+      'import': 'Import',
+      dieAria: '{n}-sided die',
+      totalSep: ' — total: ',
+      colon: ': ',
+      noLists: 'No lists yet.',
+      metaBadge: 'meta · {n}',
+      noName: '(unnamed)',
+      defList: 'List',
+      defMeta: 'Meta-list',
+      emptyMain: 'Create a list or a meta-list, or select one to get started.',
+      nameList: 'List name',
+      nameMeta: 'Meta-list name',
+      itemsPlaceholder: 'One item per line',
+      itemsLabel: 'Items (one per line)',
+      'item.one': 'item',
+      'item.many': 'items',
+      metaHint: 'Each list is drawn with its own settings (see above).',
+      drawTitle: 'Draw',
+      drawAll: 'Draw from all lists',
+      unique: 'Unique draws',
+      drawBtn: 'Draw',
+      drawCountLabel: 'Number of draws',
+      listEmptyResult: 'Empty list.',
+      only: 'Only',
+      'distinct.one': 'distinct value available',
+      'distinct.many': 'distinct values available',
+      outOf: 'out of {n} requested.',
+      listEmpty: 'This list is empty.',
+      metaNone: 'This meta-list contains no lists.',
+      confirm: 'Confirm',
+      cancel: 'Cancel',
+      del: 'Delete',
+      metaLabel: 'Grouped lists and draw settings for each',
+      metaNeedLists: 'First create some simple lists to group.',
+      metaCountAria: 'Number of draws for {name}',
+      metaUniqueAria: 'Unique draws for {name}',
+      drawsShort: 'Draws',
+      uniqueShort: 'Unique',
+      errFormat: 'Unrecognized format.',
+      errNone: 'No lists found in this file.',
+      errJson: 'Invalid JSON file.',
+      errRead: 'Could not read the file.',
+      nothingExport: 'Nothing to export yet.',
+      'imported.one': 'item imported',
+      'imported.many': 'items imported',
+      'list.one': 'list',
+      'list.many': 'lists',
+      'metalist.one': 'meta-list',
+      'metalist.many': 'meta-lists',
+      found: 'Found {l} and {m}.',
+      addExisting: 'Add to existing',
+      replaceAll: 'Replace all',
+      record: 'Save to history',
+      avoid: 'Only draws not in history',
+      noNewDraw: 'No new draw possible: every combination is already in the history.',
+      histTitle: 'History',
+      histScopeList: 'Current options: {opts}.',
+      histScopeMeta: 'Current settings of the grouped lists.',
+      modeUnique: 'unique',
+      modeRepeat: 'not unique',
+      histEmpty: 'No draws recorded for these options.',
+      histClear: 'Clear this history',
+      histClearAll: 'Clear all (every option set)',
+      histClearAsk: 'Clear this history?',
+      histClearAllAsk: 'Delete every history, for all option sets?',
+      'draw.one': 'draw',
+      'draw.many': 'draws',
+      'entry.one': 'entry',
+      'entry.many': 'entries'
+    }
+  };
+
+  function detectLang() {
+    try {
+      var saved = localStorage.getItem(LANG_KEY);
+      if (saved && I18N[saved]) return saved;
+    } catch (e) { /* stockage indisponible */ }
+    var nav = (navigator.language || 'fr').toLowerCase();
+    return nav.indexOf('fr') === 0 ? 'fr' : 'en';
+  }
+
+  var lang = detectLang();
+
+  function t(key, vars) {
+    var s = (I18N[lang] && I18N[lang][key]);
+    if (s == null) s = I18N.fr[key];
+    if (s == null) s = key;
+    if (vars) Object.keys(vars).forEach(function (k) { s = s.split('{' + k + '}').join(vars[k]); });
+    return s;
+  }
+
+  // Accord : en français 0 et 1 sont au singulier ; en anglais seul 1 l'est.
+  function plural(n, key) {
+    var many = lang === 'fr' ? n > 1 : n !== 1;
+    return n + ' ' + t(key + (many ? '.many' : '.one'));
+  }
+
+  /* ---------- Aléatoire ---------- */
+  function randInt(n) { // entier uniforme dans [0, n-1]
+    if (window.crypto && crypto.getRandomValues) {
+      var a = new Uint32Array(1);
+      var limit = Math.floor(4294967296 / n) * n;
+      do { crypto.getRandomValues(a); } while (a[0] >= limit);
+      return a[0] % n;
+    }
+    return Math.floor(Math.random() * n);
+  }
+
+  function draw(items, count, unique) {
+    var pool, out = [], i, j, tmp;
+    if (unique) {
+      pool = items.filter(function (v, idx) { return items.indexOf(v) === idx; });
+      count = Math.min(count, pool.length);
+      for (i = 0; i < count; i++) { // Fisher-Yates partiel
+        j = i + randInt(pool.length - i);
+        tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+        out.push(pool[i]);
+      }
+    } else {
+      for (i = 0; i < count; i++) out.push(items[randInt(items.length)]);
+    }
+    return out;
+  }
+
+  /* ---------- Persistance ---------- */
+  var state = { collections: [], selected: null, opts: { count: 1, unique: false }, dice: { sides: 6, count: 1 } };
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (d && Array.isArray(d.collections)) state.collections = d.collections;
+      if (d && d.opts) {
+        state.opts.count = Math.max(1, parseInt(d.opts.count, 10) || 1);
+        state.opts.unique = !!d.opts.unique;
+      }
+      if (d && d.dice && DICE.indexOf(d.dice.sides) >= 0) {
+        state.dice.sides = d.dice.sides;
+        state.dice.count = Math.min(100, Math.max(1, parseInt(d.dice.count, 10) || 1));
+      }
+      if (d && d.selected && find(d.selected)) state.selected = d.selected;
+    } catch (e) { /* stockage indisponible ou corrompu */ }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({
+        collections: state.collections,
+        selected: state.selected,
+        opts: state.opts,
+        dice: state.dice
+      }));
+    } catch (e) { /* ignoré */ }
+  }
+
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function find(id) {
+    for (var i = 0; i < state.collections.length; i++) if (state.collections[i].id === id) return state.collections[i];
+    return null;
+  }
+
+  /* ---------- Helpers DOM ---------- */
+  function h(tag, attrs, children) {
+    var el = document.createElement(tag), k;
+    if (attrs) for (k in attrs) {
+      if (k === 'text') el.textContent = attrs[k];
+      else if (k.slice(0, 2) === 'on') el.addEventListener(k.slice(2), attrs[k]);
+      else if (attrs[k] === true) el.setAttribute(k, '');
+      else if (attrs[k] !== false && attrs[k] != null) el.setAttribute(k, attrs[k]);
+    }
+    (children || []).forEach(function (c) { if (c) el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c); });
+    return el;
+  }
+  function $(id) { return document.getElementById(id); }
+
+  /* ---------- Langue : éléments statiques et sélecteur ---------- */
+  function applyStatic() {
+    document.documentElement.lang = lang;
+    document.title = t('title');
+    var meta = document.querySelector('meta[name="description"]');
+    if (meta) meta.setAttribute('content', t('desc'));
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n]'), function (el) {
+      el.textContent = t(el.getAttribute('data-i18n'));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-i18n-label]'), function (el) {
+      el.setAttribute('aria-label', t(el.getAttribute('data-i18n-label')));
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-lang]'), function (b) {
+      b.setAttribute('aria-pressed', b.getAttribute('data-lang') === lang ? 'true' : 'false');
+    });
+  }
+
+  function setLang(l) {
+    if (!I18N[l] || l === lang) return;
+    lang = l;
+    try { localStorage.setItem(LANG_KEY, l); } catch (e) { /* ignoré */ }
+    clearTimeout(importTimer);
+    $('importPrompt').textContent = '';
+    applyStatic();
+    renderDicePicker();
+    renderDiceResult();
+    renderSidebar();
+    renderMain();
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-lang]'), function (b) {
+    b.addEventListener('click', function () { setLang(b.getAttribute('data-lang')); });
+  });
+
+  /* ---------- Onglets ---------- */
+  function showTab(name) {
+    ['des', 'listes'].forEach(function (tab) {
+      $('tab-' + tab).setAttribute('aria-selected', tab === name ? 'true' : 'false');
+      $('panel-' + tab).hidden = tab !== name;
+    });
+  }
+  $('tab-des').addEventListener('click', function () { showTab('des'); });
+  $('tab-listes').addEventListener('click', function () { showTab('listes'); });
+
+  /* ---------- Dés ---------- */
+  var lastRoll = null;
+
+  function renderDicePicker() {
+    var box = $('dicePicker');
+    box.textContent = '';
+    DICE.forEach(function (s) {
+      box.appendChild(h('button', {
+        type: 'button', text: 'd' + s,
+        'aria-pressed': state.dice.sides === s ? 'true' : 'false',
+        'aria-label': t('dieAria', { n: s }),
+        onclick: function () { state.dice.sides = s; save(); renderDicePicker(); }
+      }));
+    });
+  }
+
+  function renderDiceResult() {
+    var res = $('diceResult');
+    res.textContent = '';
+    if (!lastRoll) return;
+    res.appendChild(h('div', { class: 'chips' }, lastRoll.vals.map(function (v) { return h('span', { class: 'chip', text: String(v) }); })));
+    res.appendChild(h('div', { class: 'total' }, [
+      lastRoll.n + 'd' + lastRoll.s + (lastRoll.n > 1 ? t('totalSep') : t('colon')),
+      h('strong', { text: String(lastRoll.sum) })
+    ]));
+  }
+
+  function setDiceCount(v) {
+    v = Math.min(100, Math.max(1, parseInt(v, 10) || 1));
+    state.dice.count = v;
+    $('diceCount').value = v;
+    save();
+  }
+  $('diceMinus').addEventListener('click', function () { setDiceCount(state.dice.count - 1); });
+  $('dicePlus').addEventListener('click', function () { setDiceCount(state.dice.count + 1); });
+  $('diceCount').addEventListener('change', function (e) { setDiceCount(e.target.value); });
+
+  $('rollBtn').addEventListener('click', function () {
+    setDiceCount($('diceCount').value);
+    var n = state.dice.count, s = state.dice.sides, vals = [], sum = 0, i;
+    for (i = 0; i < n; i++) { var v = randInt(s) + 1; vals.push(v); sum += v; }
+    lastRoll = { n: n, s: s, vals: vals, sum: sum };
+    renderDiceResult();
+  });
+
+  /* ---------- Listes : barre latérale ---------- */
+  function simpleLists() { return state.collections.filter(function (c) { return c.type === 'list'; }); }
+
+  function renderSidebar() {
+    var ul = $('collection');
+    ul.textContent = '';
+    if (!state.collections.length) {
+      ul.appendChild(h('li', { class: 'hint', text: t('noLists') }));
+      return;
+    }
+    state.collections.forEach(function (c) {
+      var badge = c.type === 'meta'
+        ? h('span', { class: 'badge meta', text: t('metaBadge', { n: c.members.filter(find).length }) })
+        : h('span', { class: 'badge', text: String(c.items.length) });
+      ul.appendChild(h('li', null, [
+        h('button', {
+          type: 'button',
+          'aria-current': c.id === state.selected ? 'true' : 'false',
+          onclick: function () { state.selected = c.id; pendingDelete = null; pendingClear = null; save(); renderSidebar(); renderMain(); }
+        }, [h('span', { class: 'name', text: c.name || t('noName') }), badge])
+      ]));
+    });
+  }
+
+  function createCollection(type) {
+    var n = state.collections.filter(function (c) { return c.type === type; }).length + 1;
+    var c = type === 'list'
+      ? { id: uid(), type: 'list', name: t('defList') + ' ' + n, items: [] }
+      : { id: uid(), type: 'meta', name: t('defMeta') + ' ' + n, members: [] };
+    state.collections.push(c);
+    state.selected = c.id;
+    save(); renderSidebar(); renderMain();
+  }
+  $('newList').addEventListener('click', function () { createCollection('list'); });
+  $('newMeta').addEventListener('click', function () { createCollection('meta'); });
+
+  function deleteCollection(c) {
+    pendingDelete = null;
+    state.collections = state.collections.filter(function (x) { return x.id !== c.id; });
+    state.collections.forEach(function (x) {
+      if (x.type === 'meta') {
+        x.members = x.members.filter(function (m) { return m !== c.id; });
+        if (x.settings) delete x.settings[c.id];
+      }
+    });
+    state.selected = null;
+    pendingClear = null;
+    pruneHistory();
+    save(); renderSidebar(); renderMain();
+  }
+
+  /* ---------- Listes : panneau principal ---------- */
+  var resultBox = null;
+  var pendingDelete = null;
+  var pendingClear = null;   // 'one' | 'all' : vidage d'historique en attente de confirmation
+  var histBox = null;        // conteneur de l'historique affiché
+  var histOwner = null;      // liste ou méta-liste dont l'historique est affiché
+
+  function renderMain() {
+    var main = $('main');
+    main.textContent = '';
+    var c = state.selected && find(state.selected);
+    histBox = null; histOwner = null;
+    if (!c) {
+      main.appendChild(h('div', { class: 'card empty', text: t('emptyMain') }));
+      return;
+    }
+
+    /* Éditeur */
+    var nameInput = h('input', {
+      type: 'text', id: 'colName', value: c.name, maxlength: '80',
+      oninput: function (e) { c.name = e.target.value; save(); renderSidebar(); }
+    });
+    var editor = h('div', { class: 'card' }, [
+      h('div', { class: 'editor-head' }, [
+        h('div', null, [h('label', { for: 'colName', text: c.type === 'meta' ? t('nameMeta') : t('nameList') }), nameInput]),
+        deleteArea(c)
+      ])
+    ]);
+
+    if (c.type === 'list') {
+      var info = h('div', { class: 'hint' });
+      var updateInfo = function () { info.textContent = plural(c.items.length, 'item'); };
+      var ta = h('textarea', {
+        id: 'colItems', placeholder: t('itemsPlaceholder'),
+        oninput: function (e) {
+          c.items = e.target.value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+          save(); updateInfo(); renderSidebar();
+        }
+      });
+      ta.value = c.items.join('\n');
+      updateInfo();
+      editor.appendChild(h('label', { for: 'colItems', text: t('itemsLabel') }));
+      editor.appendChild(ta);
+      editor.appendChild(info);
+    } else {
+      editor.appendChild(metaEditor(c));
+    }
+    main.appendChild(editor);
+
+    /* Tirage */
+    histOwner = c;
+    histBox = h('div');
+    resultBox = h('div', { 'aria-live': 'polite' });
+
+    var recordCb = h('input', { type: 'checkbox' });
+    recordCb.checked = recordOf(c);
+    recordCb.addEventListener('change', function () { c.record = recordCb.checked; save(); });
+    var avoidCb = h('input', { type: 'checkbox' });
+    avoidCb.checked = avoidOf(c);
+    avoidCb.addEventListener('change', function () { c.avoid = avoidCb.checked; save(); });
+    var histOpts = [
+      h('label', { class: 'check' }, [recordCb, t('record')]),
+      h('label', { class: 'check' }, [avoidCb, t('avoid')])
+    ];
+
+    if (c.type === 'meta') {
+      main.appendChild(h('div', { class: 'card' }, [
+        h('h2', { text: t('drawTitle') }),
+        h('div', { class: 'hint', text: t('metaHint') }),
+        h('div', { class: 'row', style: 'margin-top:6px' }, histOpts),
+        h('div', { class: 'row', style: 'margin-top:6px' }, [
+          h('button', { type: 'button', class: 'primary', text: t('drawAll'), onclick: function () { runMeta(c); } })
+        ]),
+        resultBox
+      ]));
+    } else {
+      var countInput = h('input', {
+        type: 'number', id: 'drawCount', min: '1', max: '1000', value: String(state.opts.count), inputmode: 'numeric',
+        onchange: function (e) {
+          state.opts.count = Math.min(1000, Math.max(1, parseInt(e.target.value, 10) || 1));
+          e.target.value = state.opts.count; save(); refreshHistory();
+        }
+      });
+      var uniqueCb = h('input', { type: 'checkbox' });
+      uniqueCb.checked = state.opts.unique;
+      uniqueCb.addEventListener('change', function () { state.opts.unique = uniqueCb.checked; save(); refreshHistory(); });
+
+      main.appendChild(h('div', { class: 'card' }, [
+        h('h2', { text: t('drawTitle') }),
+        h('div', { class: 'row' }, [
+          h('div', null, [h('label', { for: 'drawCount', text: t('drawCountLabel') }), countInput]),
+          h('label', { class: 'check' }, [uniqueCb, t('unique')])
+        ].concat(histOpts, [
+          h('button', { type: 'button', class: 'primary', text: t('drawBtn'), onclick: function () { runDraw(c, countInput); } })
+        ])),
+        resultBox
+      ]));
+    }
+    main.appendChild(h('div', { class: 'card' }, [histBox]));
+    renderHistory();
+  }
+
+  function groupResult(title, items, unique, requested) {
+    var g = h('div', { class: 'group' });
+    if (title) g.appendChild(h('h3', { text: title }));
+    if (!items.length) {
+      g.appendChild(h('div', { class: 'hint', text: t('listEmptyResult') }));
+      return g;
+    }
+    g.appendChild(h('div', { class: 'chips' }, items.map(function (v) { return h('span', { class: 'chip big', text: v }); })));
+    if (unique && items.length < requested) {
+      g.appendChild(h('div', { class: 'warn', text: t('only') + ' ' + plural(items.length, 'distinct') + ' ' + t('outOf', { n: requested }) }));
+    }
+    return g;
+  }
+
+  function runDraw(c, countInput) {
+    var n = Math.min(1000, Math.max(1, parseInt(countInput.value, 10) || 1));
+    state.opts.count = n; countInput.value = n; save();
+    performDraw(c);
+  }
+
+  function runMeta(c) { performDraw(c); }
+
+  /* ---------- Historique des tirages ----------
+     Un historique par (liste ou méta-liste) ET par jeu d'options :
+       liste      → clé « id|{nombre}{u|r} »             (u = uniques, r = répétitions possibles)
+       méta-liste → clé « id|{idListe:nombre u|r,…} »    (réglages de chaque liste membre)
+     Un tirage est une combinaison : l'ordre des valeurs ne compte pas. */
+  var HIST_KEY = 'tirages.history.v1';
+  var HIST_MAX = 300;          // entrées conservées par historique (les plus anciennes sont écartées)
+  var histories = {};          // clé → [{ t: horodatage, r: [[valeurs de chaque liste]] }]
+
+  function loadHistory() {
+    try {
+      var raw = localStorage.getItem(HIST_KEY);
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (!d || typeof d !== 'object' || Array.isArray(d)) return;
+      Object.keys(d).forEach(function (k) {
+        if (!Array.isArray(d[k])) return;
+        var good = d[k].filter(function (e) {
+          return e && typeof e.t === 'number' && Array.isArray(e.r) &&
+            e.r.every(function (a) { return Array.isArray(a) && a.every(isStr); });
+        });
+        if (good.length) histories[k] = good;
+      });
+    } catch (e) { /* stockage indisponible ou corrompu */ }
+  }
+
+  function saveHistory() {
+    try { localStorage.setItem(HIST_KEY, JSON.stringify(histories)); } catch (e) { /* ignoré */ }
+  }
+
+  // Supprime les historiques des listes qui n'existent plus.
+  function pruneHistory() {
+    var ids = Object.create(null);
+    state.collections.forEach(function (c) { ids[c.id] = true; });
+    Object.keys(histories).forEach(function (k) { if (!ids[k.split('|')[0]]) delete histories[k]; });
+    saveHistory();
+  }
+
+  function recordOf(c) { return c.record !== false; }   // enregistrement activé par défaut
+  function avoidOf(c) { return c.avoid === true; }
+
+  // Éléments à tirer (« parts ») et clé d'historique correspondant aux options actuelles.
+  function drawSpec(c) {
+    var parts, sig;
+    if (c.type === 'list') {
+      var n = state.opts.count, u = state.opts.unique;
+      parts = [{ id: c.id, name: c.name, items: c.items, count: n, unique: u }];
+      sig = n + (u ? 'u' : 'r');
+    } else {
+      parts = c.members.map(find).filter(Boolean).map(function (l) {
+        var s = memberSettings(c, l.id);
+        return { id: l.id, name: l.name, items: l.items, count: s.count, unique: s.unique };
+      });
+      sig = parts.map(function (p) { return p.id + ':' + p.count + (p.unique ? 'u' : 'r'); }).join(',');
+    }
+    return { parts: parts, key: c.id + '|' + sig };
+  }
+
+  function drawPart(p) { return p.items.length ? draw(p.items, p.count, p.unique) : []; }
+
+  // Nombre de valeurs réellement tirées pour une liste (tirage unique limité aux valeurs distinctes).
+  function effK(p) {
+    var m = new Set(p.items).size;
+    return m === 0 ? 0 : (p.unique ? Math.min(p.count, m) : p.count);
+  }
+
+  function binom(n, k) {
+    k = Math.min(k, n - k);
+    var r = 1;
+    for (var i = 1; i <= k; i++) { r = r * (n - k + i) / i; if (r > 1e15) return Infinity; }
+    return Math.round(r);
+  }
+
+  // Nombre de combinaisons possibles : C(m,k) en unique, C(m+k-1,k) avec répétitions.
+  function totalCombos(parts) {
+    var total = 1;
+    parts.forEach(function (p) {
+      var m = new Set(p.items).size, k = effK(p);
+      if (m === 0) return;
+      total *= p.unique ? binom(m, k) : binom(m + k - 1, k);
+    });
+    return total;
+  }
+
+  function canon(res) {
+    return JSON.stringify(res.map(function (a) { return a.slice().sort(); }));
+  }
+
+  // Une entrée n'est « valide » que si elle correspond encore aux listes actuelles
+  // (une liste modifiée depuis ne doit pas fausser le calcul d'épuisement).
+  function validDistinct(arr, parts) {
+    var infos = parts.map(function (p) { return { set: new Set(p.items), k: effK(p), unique: p.unique }; });
+    var seen = new Set();
+    arr.forEach(function (e) {
+      if (e.r.length !== infos.length) return;
+      var ok = e.r.every(function (sub, i) {
+        var inf = infos[i];
+        if (sub.length !== inf.k) return false;
+        if (!sub.every(function (v) { return inf.set.has(v); })) return false;
+        return !inf.unique || new Set(sub).size === sub.length;
+      });
+      if (ok) seen.add(canon(e.r));
+    });
+    return seen.size;
+  }
+
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) { var j = randInt(i + 1), tmp = a[i]; a[i] = a[j]; a[j] = tmp; }
+    return a;
+  }
+
+  function enumerate(vals, k, unique) {
+    var out = [], cur = [];
+    (function rec(start) {
+      if (cur.length === k) { out.push(cur.slice()); return; }
+      var last = unique ? vals.length - (k - cur.length) : vals.length - 1;
+      for (var i = start; i <= last; i++) {
+        cur.push(vals[i]);
+        rec(unique ? i + 1 : i);
+        cur.pop();
+      }
+    })(0);
+    return out;
+  }
+
+  // Tire une combinaison absente de `seen`. Essais aléatoires d'abord ; si l'espace est petit,
+  // énumération exhaustive pour garantir qu'une combinaison restante soit trouvée.
+  function drawNew(parts, seen) {
+    var i, res;
+    for (i = 0; i < 400; i++) {
+      res = parts.map(drawPart);
+      if (!seen.has(canon(res))) return res;
+    }
+    if (totalCombos(parts) > 20000) return null;
+    var lists = parts.map(function (p) {
+      var k = effK(p);
+      return k === 0 ? [[]] : enumerate(Array.from(new Set(p.items)).sort(), k, p.unique);
+    });
+    var cands = [];
+    (function rec(idx, acc) {
+      if (idx === lists.length) { if (!seen.has(canon(acc))) cands.push(acc.slice()); return; }
+      lists[idx].forEach(function (cmb) { acc.push(cmb); rec(idx + 1, acc); acc.pop(); });
+    })(0, []);
+    if (!cands.length) return null;
+    return cands[randInt(cands.length)].map(function (a) { return shuffle(a.slice()); });
+  }
+
+  function performDraw(c) {
+    resultBox.textContent = '';
+    var spec = drawSpec(c), parts = spec.parts;
+    if (c.type === 'list' && !c.items.length) { resultBox.appendChild(h('div', { class: 'warn', text: t('listEmpty') })); return; }
+    if (c.type === 'meta' && !parts.length) { resultBox.appendChild(h('div', { class: 'warn', text: t('metaNone') })); return; }
+
+    var arr = histories[spec.key] || [];
+    var res;
+    if (avoidOf(c)) {
+      if (validDistinct(arr, parts) >= totalCombos(parts)) {
+        resultBox.appendChild(h('div', { class: 'warn no-new-draw', text: t('noNewDraw') }));
+        return;
+      }
+      res = drawNew(parts, new Set(arr.map(function (e) { return canon(e.r); })));
+      if (!res) {
+        resultBox.appendChild(h('div', { class: 'warn no-new-draw', text: t('noNewDraw') }));
+        return;
+      }
+    } else {
+      res = parts.map(drawPart);
+    }
+
+    parts.forEach(function (p, i) {
+      resultBox.appendChild(groupResult(c.type === 'meta' ? p.name : null, res[i], p.unique, p.count));
+    });
+
+    if (recordOf(c) && res.some(function (a) { return a.length; })) {
+      var list = histories[spec.key] || (histories[spec.key] = []);
+      list.push({ t: Date.now(), r: res });
+      if (list.length > HIST_MAX) list.splice(0, list.length - HIST_MAX);
+      saveHistory();
+    }
+    pendingClear = null;
+    renderHistory();
+  }
+
+  function fmtTime(ts) {
+    try {
+      return new Date(ts).toLocaleString(lang === 'fr' ? 'fr-FR' : 'en-GB',
+        { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return new Date(ts).toLocaleString(); }
+  }
+
+  function refreshHistory() { pendingClear = null; renderHistory(); }
+
+  function clearHistory(c, key, all) {
+    if (all) {
+      var prefix = c.id + '|';
+      Object.keys(histories).forEach(function (k) { if (k.indexOf(prefix) === 0) delete histories[k]; });
+    } else {
+      delete histories[key];
+    }
+    pendingClear = null;
+    saveHistory();
+    // Le message « plus de tirage disponible » n'a plus lieu d'être une fois l'historique vidé.
+    if (resultBox) Array.prototype.slice.call(resultBox.querySelectorAll('.no-new-draw')).forEach(function (n) { n.remove(); });
+    renderHistory();
+  }
+
+  function renderHistory() {
+    if (!histBox || !histOwner) return;
+    var c = histOwner;
+    var spec = drawSpec(c);
+    var arr = histories[spec.key] || [];
+    var prefix = c.id + '|', total = 0;
+    Object.keys(histories).forEach(function (k) { if (k.indexOf(prefix) === 0) total += histories[k].length; });
+
+    histBox.textContent = '';
+    histBox.appendChild(h('h2', { text: t('histTitle') }));
+    var scope = c.type === 'meta'
+      ? t('histScopeMeta')
+      : t('histScopeList', { opts: plural(state.opts.count, 'draw') + ' · ' + (state.opts.unique ? t('modeUnique') : t('modeRepeat')) });
+    histBox.appendChild(h('div', { class: 'hint', text: scope + ' ' + plural(arr.length, 'entry') + '.' }));
+
+    if (!arr.length) {
+      histBox.appendChild(h('div', { class: 'hint', style: 'margin-top:8px', text: t('histEmpty') }));
+    } else {
+      var box = h('div', { class: 'hist-list' });
+      arr.slice().reverse().forEach(function (e) {
+        var vals = h('div', { class: 'hist-vals' });
+        e.r.forEach(function (sub, i) {
+          var grp = h('span', { class: 'hist-grp' });
+          if (c.type === 'meta' && spec.parts[i]) grp.appendChild(h('b', { text: spec.parts[i].name + ':' }));
+          sub.forEach(function (v) { grp.appendChild(h('span', { class: 'hchip', text: v })); });
+          vals.appendChild(grp);
+        });
+        box.appendChild(h('div', { class: 'hist-row' }, [h('span', { class: 'hist-time', text: fmtTime(e.t) }), vals]));
+      });
+      histBox.appendChild(box);
+    }
+
+    if (total === 0) return;
+    var actions = h('div', { class: 'row', style: 'margin-top:10px' });
+    if (pendingClear) {
+      var all = pendingClear === 'all';
+      actions.appendChild(h('span', { class: 'hint', text: t(all ? 'histClearAllAsk' : 'histClearAsk') }));
+      actions.appendChild(h('button', { type: 'button', class: 'danger', text: t('confirm'), onclick: function () { clearHistory(c, spec.key, all); } }));
+      actions.appendChild(h('button', { type: 'button', text: t('cancel'), onclick: function () { pendingClear = null; renderHistory(); } }));
+    } else {
+      if (arr.length) {
+        actions.appendChild(h('button', { type: 'button', class: 'danger', text: t('histClear'), onclick: function () { pendingClear = 'one'; renderHistory(); } }));
+      }
+      if (total > arr.length) {
+        actions.appendChild(h('button', { type: 'button', class: 'danger', text: t('histClearAll'), onclick: function () { pendingClear = 'all'; renderHistory(); } }));
+      }
+    }
+    histBox.appendChild(actions);
+  }
+
+  function clampCount(v) { return Math.min(1000, Math.max(1, parseInt(v, 10) || 1)); }
+
+  function memberSettings(c, id) {
+    if (!c.settings) c.settings = {};
+    if (!c.settings[id]) c.settings[id] = { count: 1, unique: false };
+    return c.settings[id];
+  }
+
+  function deleteArea(c) {
+    if (pendingDelete === c.id) {
+      return h('div', { class: 'row' }, [
+        h('button', { type: 'button', class: 'danger', text: t('confirm'), onclick: function () { deleteCollection(c); } }),
+        h('button', { type: 'button', text: t('cancel'), onclick: function () { pendingDelete = null; renderMain(); } })
+      ]);
+    }
+    return h('div', { class: 'row' }, [
+      h('button', { type: 'button', class: 'danger', text: t('del'), onclick: function () { pendingDelete = c.id; renderMain(); } })
+    ]);
+  }
+
+  function metaEditor(c) {
+    var wrap = h('div', null, [h('label', { text: t('metaLabel') })]);
+    var lists = simpleLists();
+    if (!lists.length) {
+      wrap.appendChild(h('div', { class: 'hint', text: t('metaNeedLists') }));
+      return wrap;
+    }
+    var box = h('div', { class: 'members' });
+    lists.forEach(function (l) {
+      var s = memberSettings(c, l.id);
+      var cb = h('input', { type: 'checkbox' });
+      cb.checked = c.members.indexOf(l.id) >= 0;
+      var cnt = h('input', { type: 'number', min: '1', max: '1000', value: String(s.count), inputmode: 'numeric', 'aria-label': t('metaCountAria', { name: l.name }) });
+      var uq = h('input', { type: 'checkbox', 'aria-label': t('metaUniqueAria', { name: l.name }) });
+      uq.checked = s.unique;
+      var opts = h('div', { class: 'member-opts' }, [
+        h('span', { class: 'hint', text: t('drawsShort') }), cnt,
+        h('label', { class: 'check' }, [uq, t('uniqueShort')])
+      ]);
+      var sync = function () {
+        cnt.disabled = !cb.checked;
+        uq.disabled = !cb.checked;
+        opts.style.opacity = cb.checked ? '1' : '.45';
+      };
+      sync();
+      cb.addEventListener('change', function () {
+        var chosen = c.members.filter(function (m) { return m !== l.id; });
+        if (cb.checked) chosen.push(l.id);
+        c.members = lists.map(function (x) { return x.id; }).filter(function (id) { return chosen.indexOf(id) >= 0; });
+        sync(); save(); renderSidebar(); refreshHistory();
+      });
+      cnt.addEventListener('change', function () { s.count = clampCount(cnt.value); cnt.value = s.count; save(); refreshHistory(); });
+      uq.addEventListener('change', function () { s.unique = uq.checked; save(); refreshHistory(); });
+      box.appendChild(h('div', { class: 'member-row' }, [
+        h('label', { class: 'check' }, [cb, l.name + ' (' + l.items.length + ')']),
+        opts
+      ]));
+    });
+    wrap.appendChild(box);
+    return wrap;
+  }
+
+  /* ---------- Import / export JSON ---------- */
+  var importTimer = null;
+
+  function showImportMsg(msg, isErr) {
+    var box = $('importPrompt');
+    box.textContent = '';
+    box.appendChild(h('div', { class: isErr ? 'warn' : 'hint', text: msg }));
+    clearTimeout(importTimer);
+    importTimer = setTimeout(function () { box.textContent = ''; }, 7000);
+  }
+
+  function isStr(x) { return typeof x === 'string'; }
+
+  function parseImport(d) {
+    var arr = Array.isArray(d) ? d : (d && Array.isArray(d.collections) ? d.collections : null);
+    if (!arr) throw new Error(t('errFormat'));
+    var out = [];
+    arr.forEach(function (c) {
+      if (!c || typeof c !== 'object') return;
+      var name = isStr(c.name) ? c.name.slice(0, 80) : '';
+      var id = isStr(c.id) ? c.id : uid();
+      if (c.type === 'list' && Array.isArray(c.items)) {
+        out.push({ id: id, type: 'list', name: name, items: c.items.filter(isStr).map(function (x) { return x.trim(); }).filter(Boolean), record: c.record !== false, avoid: c.avoid === true });
+      } else if (c.type === 'meta' && Array.isArray(c.members)) {
+        var settings = {};
+        if (c.settings && typeof c.settings === 'object') {
+          Object.keys(c.settings).forEach(function (k) {
+            var s = c.settings[k];
+            if (s && typeof s === 'object') settings[k] = { count: clampCount(s.count), unique: !!s.unique };
+          });
+        }
+        out.push({ id: id, type: 'meta', name: name, members: c.members.filter(isStr), settings: settings, record: c.record !== false, avoid: c.avoid === true });
+      }
+    });
+    if (!out.length) throw new Error(t('errNone'));
+    return out;
+  }
+
+  function applyImport(cols, replace) {
+    var map = {}, listIds = {};
+    cols.forEach(function (c) { map[c.id] = uid(); if (c.type === 'list') listIds[c.id] = true; });
+    var res = cols.map(function (c) {
+      var n = { id: map[c.id], type: c.type, name: c.name || t('noName'), record: c.record !== false, avoid: c.avoid === true };
+      if (c.type === 'list') {
+        n.items = c.items;
+      } else {
+        n.members = []; n.settings = {};
+        c.members.forEach(function (m) {
+          if (!listIds[m] || n.members.indexOf(map[m]) >= 0) return;
+          n.members.push(map[m]);
+          n.settings[map[m]] = c.settings[m] || { count: 1, unique: false };
+        });
+      }
+      return n;
+    });
+    state.collections = replace ? res : state.collections.concat(res);
+    if (replace) { state.selected = null; pruneHistory(); }
+    pendingDelete = null;
+    save(); renderSidebar(); renderMain();
+    showImportMsg(plural(res.length, 'imported') + '.', false);
+  }
+
+  function promptImport(cols) {
+    var box = $('importPrompt');
+    clearTimeout(importTimer);
+    box.textContent = '';
+    var nl = cols.filter(function (c) { return c.type === 'list'; }).length;
+    var nm = cols.length - nl;
+    box.appendChild(h('div', { class: 'notice' }, [
+      h('div', { text: t('found', { l: plural(nl, 'list'), m: plural(nm, 'metalist') }) }),
+      h('div', { class: 'notice-actions' }, [
+        h('button', { type: 'button', class: 'primary', text: t('addExisting'), onclick: function () { applyImport(cols, false); } }),
+        h('button', { type: 'button', class: 'danger', text: t('replaceAll'), onclick: function () { applyImport(cols, true); } }),
+        h('button', { type: 'button', text: t('cancel'), onclick: function () { box.textContent = ''; } })
+      ])
+    ]));
+  }
+
+  $('exportBtn').addEventListener('click', function () {
+    if (!state.collections.length) { showImportMsg(t('nothingExport'), true); return; }
+    var data = JSON.stringify({ format: 'tirages-listes', version: 1, collections: state.collections }, null, 2);
+    var url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+    var a = document.createElement('a');
+    a.href = url; a.download = 'tirages-listes.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  });
+
+  $('importBtn').addEventListener('click', function () { $('importFile').click(); });
+  $('importFile').addEventListener('change', function (e) {
+    var f = e.target.files[0];
+    e.target.value = '';
+    if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      try { promptImport(parseImport(JSON.parse(r.result))); }
+      catch (err) { showImportMsg(err instanceof SyntaxError ? t('errJson') : err.message, true); }
+    };
+    r.onerror = function () { showImportMsg(t('errRead'), true); };
+    r.readAsText(f);
+  });
+
+  /* ---------- PWA ---------- */
+  var deferredPrompt = null;
+  var installBtn = $('installBtn');
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.hidden = false;
+  });
+  installBtn.addEventListener('click', function () {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function () {}, function () {}).then(function () {
+      deferredPrompt = null;
+      installBtn.hidden = true;
+    });
+  });
+  window.addEventListener('appinstalled', function () { installBtn.hidden = true; });
+
+  // Le service worker n'est enregistré que si la page est servie en http(s) :
+  // ouverte en file://, l'application reste utilisable, sans mode hors ligne.
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    });
+  }
+  // Demande au navigateur de ne pas purger le stockage (listes) en cas de manque d'espace.
+  if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().catch(function () {});
+  }
+
+  /* ---------- Initialisation ---------- */
+  load();
+  loadHistory();
+  pruneHistory();
+  applyStatic();
+  $('diceCount').value = state.dice.count;
+  renderDicePicker();
+  renderSidebar();
+  renderMain();
+})();
+</script>
+</body>
+</html>
